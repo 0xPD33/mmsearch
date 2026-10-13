@@ -1,0 +1,16 @@
+IMG_0412.jpg | https://commons.wikimedia.org/wiki/File:Kitten_4.jpg (downscaled to 800 px) | CC0
+IMG_0587.jpg | https://commons.wikimedia.org/wiki/File:Manginapudi_beach_waves.jpg (downscaled to 800 px) | CC0
+IMG_0733.jpg | https://commons.wikimedia.org/wiki/File:Datsun_SP311_Fairlady_1600_(23101513020).jpg (downscaled to 800 px) | CC0
+IMG_0891.jpg | https://commons.wikimedia.org/wiki/File:Wright_Mountain,_San_Gabriel_Mountain_Range,_California.jpg (downscaled to 800 px) | CC0
+clip_01.mp4 | 6 s zoom made with ffmpeg from https://commons.wikimedia.org/wiki/File:Chelonia_mydas_175714490.jpg | CC0
+recording_01.wav | 11 s clip of the JFK inaugural address, 1961, https://commons.wikimedia.org/wiki/File:JFK_inaugural_address.ogg | Public domain (US federal government work)
+invoice.pdf | written for this repo | CC0
+note_a.md | written for this repo | CC0
+note_b.md | written for this repo | CC0
+note_c.md | written for this repo | CC0
+note_d.md | written for this repo | CC0
+util.rs | written for this repo | CC0
+helper.py | written for this repo | CC0
+settings.json | written for this repo | CC0
+../queries/image-query.jpg | https://commons.wikimedia.org/wiki/File:Kitten_5.jpg (downscaled to 800 px) | CC0
+../queries/audio-query.wav | 4 s cut of recording_01.wav (from 2 s) | Public domain (US federal government work)

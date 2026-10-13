@@ -1,0 +1,39 @@
+[package]
+name = "mmsearch"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+serde_json = "1"
+# ponytail: a fork until a llama-cpp-sys-2 release bundles a llama.cpp with gemma-embedding2.
+llama-cpp-sys-2 = { git = "https://github.com/0xPD33/llama-cpp-rs", rev = "08a50fce4ddeb28ae03c8dd5a16f3f401d673027", default-features = false, features = ["mtmd", "vulkan"] }
+image = { version = "0.25.10", default-features = false, features = ["png", "jpeg", "webp", "gif", "bmp", "tiff", "rayon"] }
+# Layer-shell support; the same rev as flashscribe.
+winit = { version = "0.30.5", git = "https://github.com/SergioRibera/winit", rev = "ea675fba8f0eedaf3c474a8176b553eecf1fb65a" }
+rusqlite = { version = "0.40.2", features = ["bundled"] }
+half = "2.7.1"
+nucleo = "0.5.0"
+ignore = "0.4.33"
+notify = "8.2.0"
+png = "0.18.1"
+md-5 = "0.11.0"
+pollster = "1.0.1"
+tracing = "0.1.44"
+serde = { version = "1.0.229", features = ["derive"] }
+bytemuck = { version = "1.25.2", features = ["derive"] }
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+wayland-client = "0.31.15"
+wayland-protocols = { version = "0.32.13", features = ["staging", "client"] }
+cpal = "0.16"
+wgpu = "25.0.2"
+glyphon = "0.9"
+chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
+wayland-protocols-wlr = { version = "0.3.12", features = ["client"] }
+
+[lints.clippy]
+# ponytail: the draw helpers take position, size, color and style as plain values.
+# Bundling them into structs only to satisfy this lint adds types nobody needs.
+too_many_arguments = "allow"

@@ -1,0 +1,14 @@
+[Unit]
+Description=mmsearch multimodal search daemon
+PartOf=graphical-session.target
+After=graphical-session.target
+# The overlay needs a Wayland session; without one the daemon would fail and restart forever.
+ConditionEnvironment=WAYLAND_DISPLAY
+
+[Service]
+ExecStart=@out@/bin/mmsearch daemon
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=graphical-session.target
