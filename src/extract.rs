@@ -36,8 +36,11 @@ pub struct Piece {
 /// Extracts the pieces of `path`. `root` gives the relative path for the document title.
 pub fn extract(root: &Path, path: &Path, kind: Kind) -> Result<Vec<Piece>> {
     match kind {
-        Kind::Text | Kind::Code => Ok(text_pieces(root, path, read_text(path)?, true)),
-        Kind::Data => Ok(text_pieces(root, path, read_text(path)?, false)),
+        Kind::Text => Ok(text_pieces(root, path, read_text(path)?, usize::MAX)),
+        // One vector per code file, from its start: a vector per chunk made code about 90%
+        // of the vectors in a developer's home. Keyword search still covers every chunk.
+        Kind::Code => Ok(text_pieces(root, path, read_text(path)?, 1)),
+        Kind::Data => Ok(text_pieces(root, path, read_text(path)?, 0)),
         Kind::Pdf => {
             let out = run(Command::new("pdftotext")
                 .args(["-layout", "-l", "50"])
@@ -47,7 +50,7 @@ pub fn extract(root: &Path, path: &Path, kind: Kind) -> Result<Vec<Piece>> {
                 root,
                 path,
                 Some(String::from_utf8_lossy(&out).into_owned()),
-                true,
+                usize::MAX,
             ))
         }
         Kind::Image => image_pieces(path),
@@ -69,7 +72,8 @@ fn read_text(path: &Path) -> Result<Option<String>> {
     Ok(String::from_utf8(bytes).ok())
 }
 
-fn text_pieces(root: &Path, path: &Path, text: Option<String>, embed: bool) -> Vec<Piece> {
+/// The first `vectors` chunks get an embedding input; all chunks get keyword text.
+fn text_pieces(root: &Path, path: &Path, text: Option<String>, vectors: usize) -> Vec<Piece> {
     let Some(text) = text else { return Vec::new() };
     let title = path
         .strip_prefix(root)
@@ -78,8 +82,9 @@ fn text_pieces(root: &Path, path: &Path, text: Option<String>, embed: bool) -> V
         .into_owned();
     chunks(&text)
         .into_iter()
-        .map(|c| Piece {
-            embed: embed.then(|| (document_prompt(&title, &c), Vec::new())),
+        .enumerate()
+        .map(|(i, c)| Piece {
+            embed: (i < vectors).then(|| (document_prompt(&title, &c), Vec::new())),
             fts: Some(c),
         })
         .collect()

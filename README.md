@@ -41,7 +41,8 @@ Everything runs on your machine. The model runs on your GPU, the index stays in 
 - **Search by meaning.** Type "a cat in the garden" and get the cat photo named `IMG_0412.jpg`.
 - **Every kind of file in one list.** Photos, videos, audio, PDFs, notes and source code share one ranked result list.
 - **Three ways to ask.** Type text, paste or capture an image, or hold a key and speak.
-- **Instant first results.** Path and keyword matches show at once. Meaning matches join a moment later.
+- **Instant first results.** Path matches show in milliseconds. Keyword and meaning matches join a moment later.
+- **Keyboard or mouse.** Point and click to open, scroll and drag through hundreds of results, and edit the query like any text field.
 - **Always up to date.** The daemon watches your files and indexes changes as they happen.
 - **Stays out of your way.** Indexing pauses on battery and when a game or a build loads the machine. The model also leaves the GPU, so the game gets its VRAM back.
 - **One binary.** The model runs inside the daemon through llama.cpp and Vulkan. There is no Python, no server and no cloud API.
@@ -64,7 +65,7 @@ These are real results from the files in [`tests/fixtures`](tests/fixtures). Non
 
 - **A Wayland compositor with layer-shell support,** for example niri, Hyprland, sway, river or KDE Plasma. GNOME Shell does not support layer-shell, so the overlay cannot open there. I test mmsearch on niri.
 - **A GPU with a Vulkan driver.** The model uses about 2.3 GB of VRAM while it is loaded. Without Vulkan, llama.cpp runs on the CPU, which is much slower.
-- **About 900 MB of disk for the model,** plus space for the index. One home directory with 212,651 indexed files gave an 8.0 GB index.
+- **About 900 MB of disk for the model,** plus space for the index. One home directory with 214,703 indexed files gave an 8.3 GB index.
 - **A network connection on the first start only.** The daemon downloads the model from Hugging Face once.
 
 ## Install
@@ -193,7 +194,7 @@ bindsym $mod+space exec mmsearch toggle
 On the first start, the daemon does these steps:
 
 1. It downloads the model files (about 865 MB) to `~/.local/share/mmsearch/models/`.
-2. It walks your home directory and lists every file for path search.
+2. It walks your home directory and lists the files for path search.
 3. It indexes the contents: images, video and audio first, then documents and code.
 
 Path search works at once. Meaning search finds more files as the index grows. To see the progress, run:
@@ -208,26 +209,59 @@ The overlay shows the same line in its bottom right corner.
 
 ## Use the overlay
 
-Press your key, type, and press `Enter` to open the selected file.
+Press your key, type, and press `Enter` or click a result to open it.
 
-| Key | Action |
-|---|---|
-| Type | Search. Path and keyword results show at once. Meaning results follow after a 150 ms pause. |
-| `↑` `↓` or `Ctrl+J` `Ctrl+K` | Move the selection. |
-| `Tab`, `Shift+Tab` | Change the filter: All, Files, Images, Media. |
-| `Enter` | Open the file in its default app. |
-| `Ctrl+Enter` | Show the file in your file manager. |
-| `Ctrl+C` | Copy the path of the file. |
-| `Ctrl+V` | Paste an image from the clipboard as a query. Text pastes as usual. |
-| `Ctrl+S` | Select a region of the screen and search with it. |
-| Hold `Ctrl+Space` | Record a voice query, up to 30 seconds. Release to search. |
-| `Ctrl+U` | Clear the query. |
-| `Backspace` on an empty query | Remove the image or voice query. |
-| `Esc` | Close the overlay. |
+Results show in steps: path matches at once, keyword matches a moment later, and meaning matches after a 150 ms pause in typing. Each row shows a thumbnail or a file-type badge, the folder, and when the file changed. The preview pane shows the image, the video poster frame, or the best text passage. You can scroll through all results, up to 600.
 
 You can combine text with an image. For example, paste a photo of a car and type "at night".
 
-The preview pane shows the image, the video poster frame, or the best text passage of the selected file.
+### Keyboard
+
+| Key | Action |
+|---|---|
+| `↑` `↓`, `Ctrl+J` `Ctrl+K` | Move the selection. |
+| `PgUp` `PgDn` | Move one screen. |
+| `Ctrl+Home` `Ctrl+End` | Go to the first or the last result. |
+| `Enter` | Open the file in its default app. |
+| `Ctrl+Enter` | Show the file in your file manager. |
+| `Tab`, `Shift+Tab` | Change the filter: All, Images, Media, Docs, Code. |
+| `Ctrl+1` … `Ctrl+5` | Pick a filter directly. |
+| `Ctrl+C` | Copy the selected query text. With no text selected, copy the path of the file. |
+| `Ctrl+Shift+C` | Copy the file itself: image data for an image, a file link for anything else. |
+| `Ctrl+V` | Paste an image from the clipboard as a query. Text pastes at the caret. |
+| `Ctrl+S` | Select a region of the screen and search with it. |
+| Hold `Ctrl+Space` | Record a voice query, up to 30 seconds. Release to search. |
+| `Ctrl+=` `Ctrl+-` `Ctrl+0` | Make the overlay bigger, smaller, or the default size. |
+| `Esc` | Close the overlay. |
+
+The search field edits like any text field:
+
+| Key | Action |
+|---|---|
+| `←` `→`, `Home` `End` | Move the caret. Add `Shift` to select. |
+| `Ctrl+←` `Ctrl+→` | Move by word. |
+| `Backspace` `Delete` | Delete a character. With `Ctrl`, delete a word. |
+| `Ctrl+A` | Select all. |
+| `Ctrl+X` | Cut the selected text. |
+| `Ctrl+Z`, `Ctrl+Shift+Z` or `Ctrl+Y` | Undo, redo. |
+| `Ctrl+W`, `Ctrl+U` | Delete the word before the caret, clear the query. |
+| `Backspace` on an empty query | Remove the image or voice query. |
+
+### Mouse
+
+| Action | Result |
+|---|---|
+| Point at a result | Select it and show its preview. |
+| Click a result, or the preview | Open the file. |
+| Right-click a result | Show the file in your file manager. |
+| Wheel | Scroll the results. Over the preview, scroll the preview text. |
+| Drag the scrollbar | Scroll fast through long result lists. |
+| Click the buttons under the preview | Open, show in folder, copy the path, copy the file. |
+| Click the filter chips | Change the filter. |
+| Click, drag or double-click in the search field | Place the caret, select text, select a word. |
+| Click the × in the search field | Clear the query. |
+| Click an attached image or voice chip | Remove it. |
+| Click an example in the empty overlay | Search for it. |
 
 ## Use the command line
 
@@ -305,7 +339,7 @@ The daemon runs the model in-process through llama.cpp with Vulkan. Your query a
 
 ### Three matchers, one list
 
-Each keystroke starts three matchers. Their lists merge into one with Reciprocal Rank Fusion. A file that ranks high in more than one list goes to the top.
+Each query runs three matchers. Their lists merge into one with Reciprocal Rank Fusion. A file that ranks high in more than one list goes to the top. The fast matchers answer first, so the list never waits for the slow ones.
 
 ```mermaid
 sequenceDiagram
@@ -315,8 +349,9 @@ sequenceDiagram
     participant Model as EmbeddingGemma 2
     You->>Overlay: Type "kitten"
     Overlay->>Search: The query, on each keystroke
-    Search-->>Overlay: Path matches (fuzzy) and keyword matches (SQLite FTS5)
-    Note over Overlay,Search: The list shows at once
+    Search-->>Overlay: Path matches (fuzzy), in milliseconds
+    Search-->>Overlay: Keyword matches (SQLite FTS5) merged in
+    Note over Search: A newer keystroke skips the rest
     Note over You,Overlay: 150 ms with no typing
     Search->>Model: Embed the query
     Model-->>Search: Query vector
@@ -370,7 +405,8 @@ flowchart LR
 | Video | 8 frames, evenly spaced. A file with no video stream counts as audio. |
 | Audio | The first 5 minutes of sound. |
 | PDF | The text of the first 50 pages. |
-| Text and code | The text, in chunks of about 500 tokens. Files larger than 1 MB are skipped. |
+| Text | The text, in chunks of about 500 tokens. Files larger than 1 MB are skipped. |
+| Code | All the text for keyword search, and the start of the file for meaning search. Files larger than 1 MB are skipped. |
 | JSON, YAML, TOML | The text, for keyword search only. |
 | Everything else | The path only. |
 
@@ -381,7 +417,7 @@ mmsearch indexes the contents of your home directory. It skips these:
 - Build output in `target`, `dist` and `build`
 - Android SDK trees in `Sdk`
 
-Path search also covers hidden directories, except `.git`, `.cache`, `.cargo`, `.rustup`, `.npm`, `.local/state` and `.Trash`. It also skips `node_modules`. mmsearch does not follow symlinks or enter other file systems, such as network mounts.
+Path search covers more: it also lists build output, `venv` directories and SDK trees, unless `.gitignore` excludes them. It also includes `~/.config` and hidden files, such as `~/.zshrc`. It skips the other hidden directories, `.git` and `node_modules`. In one home directory, hidden directories held 73% of all paths, mostly game files and package caches. mmsearch does not follow symlinks or enter other file systems, such as network mounts.
 
 ## Files and privacy
 

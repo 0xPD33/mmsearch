@@ -50,7 +50,8 @@ pub struct Tex {
 #[derive(Default)]
 pub struct Scene {
     pub quads: Vec<Quad>,
-    pub images: Vec<(Quad, Rc<Tex>)>,
+    /// Each image with its clip: left, top, right, bottom in physical pixels.
+    pub images: Vec<(Quad, Rc<Tex>, [f32; 4])>,
     pub texts: Vec<Text>,
 }
 
@@ -386,6 +387,22 @@ impl Gfx {
             .fold(0.0, f32::max)
     }
 
+    /// Height in physical pixels of `text` wrapped at `wrap` physical pixels.
+    pub fn text_height(&mut self, text: &str, size: f32, wrap: f32, mono: bool) -> f32 {
+        let t = Text {
+            text: text.into(),
+            x: 0.0,
+            y: 0.0,
+            size,
+            color: [0; 4],
+            wrap: Some(wrap),
+            mono,
+            clip: [0.0; 4],
+        };
+        let key = self.shape(&t);
+        self.texts[&key].layout_runs().count() as f32 * (size * 1.25).round()
+    }
+
     /// Draws the scene. Returns false when the surface needs another try.
     pub fn render(&mut self, target: &mut Target, scene: &Scene) -> Result<bool> {
         let size = target.window.surface_size();
@@ -420,7 +437,7 @@ impl Gfx {
             .quads
             .iter()
             .copied()
-            .chain(scene.images.iter().map(|(q, _)| *q))
+            .chain(scene.images.iter().map(|(q, _, _)| *q))
             .collect();
         let instance_buf = (!instances.is_empty()).then(|| {
             self.device
@@ -492,11 +509,21 @@ impl Gfx {
                 pass.set_pipeline(&self.rect_pipe);
                 pass.draw(0..4, 0..scene.quads.len() as u32);
                 pass.set_pipeline(&self.image_pipe);
-                for (i, (_, tex)) in scene.images.iter().enumerate() {
+                for (i, (_, tex, clip)) in scene.images.iter().enumerate() {
+                    let x0 = clip[0].clamp(0.0, w as f32) as u32;
+                    let y0 = clip[1].clamp(0.0, h as f32) as u32;
+                    let x1 = clip[2].clamp(0.0, w as f32) as u32;
+                    let y1 = clip[3].clamp(0.0, h as f32) as u32;
+                    if x1 <= x0 || y1 <= y0 {
+                        continue;
+                    }
+                    pass.set_scissor_rect(x0, y0, x1 - x0, y1 - y0);
                     let at = (scene.quads.len() + i) as u32;
                     pass.set_bind_group(1, &tex.bind, &[]);
                     pass.draw(0..4, at..at + 1);
                 }
+                // The text renderer clips by itself; it needs the whole surface.
+                pass.set_scissor_rect(0, 0, w, h);
             }
             let _ = self
                 .text_renderer

@@ -49,7 +49,7 @@ The embedder loads the model when work arrives. It unloads the model after 5 min
 
 mmsearch keeps two tiers, because most files in a typical `$HOME` are caches, game data and package stores.
 
-- **Path tier:** all file paths under `$HOME`. It uses the same excludes as a plain `fd` walk: `.git`, `node_modules`, `.cache`, `.cargo`, `.rustup`, `.npm`, `.local/state` and `.Trash`. The tier also follows `.gitignore`. It does not follow symlinks, and it does not enter other file systems, such as sshfs or rclone mounts.
+- **Path tier:** the file paths under `$HOME`. It skips `.git`, `node_modules` and every hidden directory except `~/.config`; hidden files stay. The fuzzy matcher scans the whole list on each keystroke, and in one home hidden directories held 1.47M of 2.0M paths, mostly game files and package caches. Without them, a path pass takes about 15 ms instead of 0.2 to 0.9 s. The tier also follows `.gitignore`. It does not follow symlinks, and it does not enter other file systems, such as sshfs or rclone mounts.
 - **Content tier:** the files that get keyword text and vectors. It also skips every dot-directory, Python venvs, `site-packages`, `node_modules`, `__pycache__` and SDK trees.
 
 inotify cannot watch millions of paths at an acceptable cost. The daemon therefore walks the path tier again when the overlay opens, if the list is older than 60 seconds. The overlay shows the cached list at once, and new paths stream into the matcher as the walk finds them. The content tier uses inotify.
@@ -75,7 +75,8 @@ Each file kind has one extractor:
 
 | Kind | Extractor | Index content |
 |---|---|---|
-| Text and code (1 MB or less, UTF-8, no NUL bytes) | read the file | About 500-token chunks with overlap, split on line boundaries. Each chunk gets FTS text and a vector. |
+| Text (1 MB or less, UTF-8, no NUL bytes) | read the file | About 500-token chunks with overlap, split on line boundaries. Each chunk gets FTS text and a vector. |
+| Code (the same limits) | read the file | The same chunks. Each chunk gets FTS text. Only the first chunk gets a vector, so each code file has one vector for meaning search. |
 | JSON, YAML, TOML | read the file | FTS text only. |
 | Lockfiles, minified files | none | Path tier only. |
 | Image | `image` crate, format from the file content (many PNG files have a .jpg name) | One vector at the default 280-token budget. Images smaller than 64 px are skipped. |
@@ -83,6 +84,8 @@ Each file kind has one extractor:
 | Video | `ffmpeg`, 8 evenly spaced frames | One vector from all 8 frames in one prompt. One frame becomes the poster thumbnail. When a seek lands past the last frame of a very short clip, the first frame stands in. A file with no video stream goes to the audio extractor. |
 | PDF | `pdftotext` | The same chunks as text. |
 | Other | none | Path tier only. |
+
+Code has one vector per file. With a vector per chunk, code gave 1.2M of the 1.34M vectors in one developer's home: most of the index, of the RAM and of the first-index GPU time, and close to the limit of the vector search. Names and strings in code match better by keyword. The vector of the first chunk covers the path (from the document title), the imports and the module comment, so a meaning query can still find the file.
 
 The embedder packs text chunks of one file into one `llama_process` call, up to 1024 tokens per call. Packed sequences still pay attention over the whole batch, so a bigger pack is slower: on an RTX 5060 Ti, 1024 tokens gave about 51 chunks per second and 8192 tokens gave about 30. Each media item gets its own call. Images index at about 5.5 files per second.
 
@@ -117,7 +120,15 @@ Each keystroke runs three matchers:
 2. **Keyword:** FTS5 with BM25 returns the top 200. Each word of the query is quoted, so typed input cannot break the FTS query syntax. A word of 2 or more characters is a prefix term. A one-character word matches whole tokens only, because a one-character prefix scans most of the index.
 3. **Meaning:** after a 150 ms pause in typing, the embedder embeds the query prompt. The matrix scan returns the top 200.
 
-Each list collapses to the best rank per file before the merge, so one long file cannot fill the results. Reciprocal Rank Fusion merges the lists: score = Σ 1 / (60 + rank). A file in several lists goes to the top. The path results show first, and the list sorts again when the semantic results arrive. The filter chips remove kinds before the merge.
+Each list collapses to the best rank per file before the merge, so one long file cannot fill the results. Reciprocal Rank Fusion merges the lists: score = Σ 1 / (60 + rank). A file in several lists goes to the top. The filter chips remove kinds before the merge. The overlay gets all merged files, at most 600; building them takes about 5 ms.
+
+The daemon answers a keystroke in three passes, and each pass sends a full list:
+
+1. **Paths only**, in about 15 ms.
+2. **Paths and keywords.** FTS5 ranks every prefix match before it keeps the top 200, so this pass takes 0.1 to 0.5 s over about 2M chunks. If a newer keystroke is already waiting, the daemon skips this pass.
+3. **All three matchers**, after the typing pause.
+
+Before the user moves the selection, each new list selects its top result. After a move, the selected file keeps its place on screen while the list reorders around it.
 
 An image or a voice query uses only the meaning matcher. Text with an attached image gives one interleaved vector from one prompt. The text part of that query also runs the path and keyword matchers.
 
@@ -127,24 +138,39 @@ All lists have equal weight. A semantic list always returns 200 results, so it c
 
 winit cannot hide a Wayland surface. The daemon therefore keeps the GPU device, the pipelines and the glyph atlas alive, and it creates and destroys only the layer surface on each toggle. These parts are the expensive ones, so the overlay opens in one frame.
 
-The surface is a centered panel of about 900×560 logical pixels on `Layer::Overlay`, with exclusive keyboard focus. It scales with the output. The layout has a search field, filter chips, a result list on the left, a preview pane on the right, and a line of key hints.
+The surface is a centered panel on `Layer::Overlay`, with exclusive keyboard focus. The layout code works in a 900×560 logical-pixel panel, and the surface is 1.2 times that by default. `Ctrl+=` and `Ctrl+-` change the zoom from 0.8 to 1.8 until the daemon restarts. A layer surface gets its size when it is created, so a zoom change closes the surface and opens it again with the same state. The layout has a search field, filter chips, a result list on the left, a preview pane with an action bar on the right, and a line of key hints. With no query, the list shows example queries, which a click runs, and the preview pane shows the key reference.
 
 | Key | Action |
 |---|---|
-| typing | Edits the query. |
-| `↑` `↓`, `Ctrl+J` `Ctrl+K` | Moves the selection. |
-| `Tab`, `Shift+Tab` | Cycles the filter chips: All, Files, Images, Media. |
+| typing | Edits the query at the caret. `←` `→` `Home` `End` move the caret, `Shift` selects, and `Ctrl` moves or deletes by word. `Ctrl+A`, `Ctrl+X`, `Ctrl+Z` and `Ctrl+Shift+Z` work as in any text field. Plain typing joins one undo step until a separator. |
+| `↑` `↓`, `Ctrl+J` `Ctrl+K`, `PgUp` `PgDn`, `Ctrl+Home` `Ctrl+End` | Moves the selection. |
+| `Tab`, `Shift+Tab`, `Ctrl+1` … `Ctrl+5` | Changes the filter: All, Images, Media, Docs, Code. |
 | `Enter` | Opens the file with `xdg-open` under `setsid`. |
 | `Ctrl+Enter` | Opens the folder with the file selected, through `org.freedesktop.FileManager1.ShowItems`. |
-| `Ctrl+C` | Copies the path with `wl-copy`. |
-| `Ctrl+V` | Attaches an image chip if the clipboard holds an image. Otherwise it pastes text. |
+| `Ctrl+C` | Copies the selected query text, else the path, with `wl-copy`. |
+| `Ctrl+Shift+C` | Copies the file: image data with its MIME type for an image up to 50 MB, else a `text/uri-list` entry. |
+| `Ctrl+V` | Attaches an image chip if the clipboard holds an image. Otherwise it pastes text at the caret. |
 | `Ctrl+S` | Hides the overlay, selects a region with `slurp`, captures it, and reopens with the region as an image chip. The capture uses `ext-image-copy-capture-v1`, or `zwlr_screencopy_manager_v1` when the compositor lacks it; niri 26.04 offers only the wlr protocol. |
 | hold `Ctrl+Space` | Records a voice query with `cpal`, mono 16 kHz, 30 seconds maximum. A level bar shows in the search field. |
 | `Esc` | Closes the overlay. |
 
-Each result row shows a kind icon, the file name, and the parent path relative to `~`. A text hit also shows one snippet line: the first line of the best chunk that contains a query word.
+A held key repeats editing and movement only. Escape, Enter, Tab and `Ctrl` letter combinations never repeat, because winit keeps repeating a held key after the surface is gone.
 
-The indexer writes a thumbnail for each image and video to the freedesktop cache in `~/.cache/thumbnails`, which file managers share. It uses the GLib URI escaping for the file name hash, and modes 0600 and 0700, as the spec asks. The preview pane uses the cached poster frame for a video. One preview worker decodes previews and skips to the newest request. An image chip is scaled to a 1536 px long edge when it is attached. Apps that Enter opens do not inherit the wrapper's `LD_LIBRARY_PATH`.
+The mouse can do everything the keys do:
+
+- Pointer motion over a row selects it. A list that scrolls under a resting pointer keeps its selection, because only real motion counts.
+- A click on a row or on the preview opens the file. A right click shows it in its folder.
+- The wheel scrolls the list by 2 rows per notch, with an ease of about 45 ms; a touchpad scrolls without easing. When the selection would leave the view, it moves to the nearest fully visible row. Over the preview pane, the wheel scrolls long preview text.
+- The scrollbar thumb drags, and a click on the track jumps there.
+- The action bar has Open, Show in folder, Copy path and Copy file.
+- In the search field, a click places the caret, a drag selects, and a double click selects a word. An × clears the query, and a click on an image or voice chip removes it.
+- The pointer shape shows what a click does: a hand over buttons and rows, a text cursor over the field.
+
+Each result row shows a thumbnail for an image or a video, else a colored file-type badge, the file name, the parent path relative to `~`, and the modification age ("5 min", "3 d", then a date). A text hit also shows one snippet line: the first line of the best chunk that contains a query word.
+
+A worker thread loads row thumbnails for the visible rows and one page ahead, newest request first, from the freedesktop cache; for an image that is not indexed yet, it makes the thumbnail. Up to 1500 row thumbnails of 96 px stay on the GPU. Images in the scene carry a scissor rect, so a half-visible row cannot draw over the filter chips.
+
+The indexer writes a thumbnail for each image and video to the freedesktop cache in `~/.cache/thumbnails`, which file managers share. It uses the GLib URI escaping for the file name hash, and modes 0600 and 0700, as the spec asks. The preview pane uses the cached poster frame for a video. One preview worker decodes previews and skips to the newest request. For a photo, it sends the cached 256 px thumbnail first, and it skips the full decode if the selection moves on. An image chip is scaled to a 1536 px long edge when it is attached. Apps that Enter opens do not inherit the wrapper's `LD_LIBRARY_PATH`.
 
 | Kind | Preview |
 |---|---|
@@ -178,7 +204,7 @@ A Nix flake builds the binary with `buildRustPackage` and the rust-overlay toolc
 
 1. It indexes `tests/fixtures` with `mmsearch index`. The fixtures are small CC0 files: photos, a note, a source file, a PDF, an audio clip and a video.
 2. It runs fixed text, image and audio queries with `mmsearch query --json`. Each query expects its target file in the top 3.
-3. It writes `e2e-report.html` with each query, its top 5 results, their scores and thumbnails. With `MMSEARCH_SCREENSHOT=1` in a niri session, it also starts an isolated daemon and adds a `grim` screenshot of the 900x560 overlay panel only. `XDG_CACHE_HOME` points into the temp directory, so the test writes no thumbnails to the real cache.
+3. It writes `e2e-report.html` with each query, its top 5 results, their scores and thumbnails. With `MMSEARCH_SCREENSHOT=1` in a niri session, it also starts an isolated daemon and adds a `grim` screenshot of the overlay panel only, 1080x672 at the default zoom. `XDG_CACHE_HOME` points into the temp directory, so the test writes no thumbnails to the real cache.
 
 ## Not included
 

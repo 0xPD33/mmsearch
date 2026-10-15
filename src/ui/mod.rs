@@ -7,6 +7,7 @@ use winit::event_loop::EventLoopProxy;
 
 mod app;
 mod draw;
+mod field;
 mod gfx;
 mod voice;
 

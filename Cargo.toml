@@ -3,6 +3,8 @@ name = "mmsearch"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
+description = "Multimodal search overlay for Wayland: find files by name, text and meaning"
+repository = "https://github.com/0xPD33/mmsearch"
 
 [dependencies]
 anyhow = "1"

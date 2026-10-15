@@ -18,9 +18,11 @@ use std::os::unix::fs::{DirBuilderExt, PermissionsExt};
 use std::path::PathBuf;
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
 use std::sync::{Arc, RwLock};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
-const LIMIT: usize = 50;
+/// All merged results: three lists of `PER_LIST` give at most 600 files. The overlay draws
+/// only the visible rows, so a long list costs nothing to draw.
+const LIMIT: usize = 600;
 /// The typing pause before the semantic matcher runs.
 const DEBOUNCE: Duration = Duration::from_millis(150);
 
@@ -119,9 +121,12 @@ fn search_loop(
                 Err(_) => return,
             },
         };
-        // The path matcher takes up to ~0.4 s on millions of paths, so typing can queue
-        // several queries. Answer only the newest one.
-        while matches!(req, UiRequest::Search { .. }) {
+        // Typing can queue several queries while one runs. Answer only the newest one.
+        let is_search = |r: &UiRequest| matches!(r, UiRequest::Search { .. });
+        if is_search(&req) && pending.iter().any(is_search) {
+            continue;
+        }
+        while is_search(&req) {
             match rx.try_recv() {
                 Ok(newer @ UiRequest::Search { .. }) => req = newer,
                 Ok(other) => {
@@ -157,6 +162,19 @@ fn search_loop(
             } => {
                 let text = text.trim().to_string();
                 if !text.is_empty() {
+                    // Paths first, then keywords: the keyword pass can take half a second,
+                    // and a newer keystroke makes it useless.
+                    match searcher.paths(&text, filter, LIMIT) {
+                        Ok(hits) => send(UiEvent::Results {
+                            id,
+                            hits,
+                            done: false,
+                        }),
+                        Err(e) => send(UiEvent::Error(format!("search: {e}"))),
+                    }
+                    if newer_search(&rx, &mut pending) {
+                        continue;
+                    }
                     match searcher.fast(&text, filter, LIMIT) {
                         Ok(hits) => send(UiEvent::Results {
                             id,
@@ -166,13 +184,21 @@ fn search_loop(
                         Err(e) => send(UiEvent::Error(format!("search: {e}"))),
                     }
                 }
-                match rx.recv_timeout(DEBOUNCE) {
-                    Ok(newer) => {
-                        pending.push_back(newer);
-                        continue;
+                // The typing pause. Only a newer search ends it early.
+                let deadline = Instant::now() + DEBOUNCE;
+                let mut stale = false;
+                while !stale {
+                    match rx.recv_timeout(deadline.saturating_duration_since(Instant::now())) {
+                        Ok(r) => {
+                            stale = matches!(r, UiRequest::Search { .. });
+                            pending.push_back(r);
+                        }
+                        Err(RecvTimeoutError::Disconnected) => return,
+                        Err(RecvTimeoutError::Timeout) => break,
                     }
-                    Err(RecvTimeoutError::Disconnected) => return,
-                    Err(RecvTimeoutError::Timeout) => {}
+                }
+                if stale {
+                    continue;
                 }
 
                 let mut prompt = if text.is_empty() {
@@ -199,8 +225,7 @@ fn search_loop(
                 }
                 let vector = embed.embed(Priority::Query, prompt, media);
                 // The user typed on while the model ran: this result is stale.
-                if let Ok(newer) = rx.try_recv() {
-                    pending.push_back(newer);
+                if newer_search(&rx, &mut pending) {
                     continue;
                 }
                 let vector = match vector {
@@ -221,4 +246,15 @@ fn search_loop(
             }
         }
     }
+}
+
+/// Moves the requests that arrived during a search to `pending`. Returns true if one of them
+/// is a newer search, which makes the current one stale; other requests wait their turn.
+fn newer_search(rx: &Receiver<UiRequest>, pending: &mut VecDeque<UiRequest>) -> bool {
+    let mut newer = false;
+    while let Ok(r) = rx.try_recv() {
+        newer |= matches!(r, UiRequest::Search { .. });
+        pending.push_back(r);
+    }
+    newer
 }

@@ -9,6 +9,7 @@ use std::fs::{DirBuilder, OpenOptions};
 use std::os::unix::ffi::OsStrExt;
 use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 /// The "large" size of the spec.
 pub const SIZE: u32 = 256;
@@ -55,7 +56,10 @@ pub fn store(path: &Path, img: &image::DynamicImage) -> Result<()> {
     // The spec asks for owner-only access: thumbnails show private files.
     DirBuilder::new().recursive(true).mode(0o700).create(dir)?;
     // Write to a temp name and rename, as the spec asks, so readers never see half a file.
-    let tmp = dir.join(format!(".mmsearch-{}.png", std::process::id()));
+    // The indexer and the overlay both write thumbnails, so each write gets its own name.
+    static NEXT: AtomicU64 = AtomicU64::new(0);
+    let n = NEXT.fetch_add(1, Ordering::Relaxed);
+    let tmp = dir.join(format!(".mmsearch-{}-{n}.png", std::process::id()));
     {
         let file = OpenOptions::new()
             .write(true)

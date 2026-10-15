@@ -52,6 +52,7 @@ CASES=(
   "text|a sea turtle swimming over coral|clip_01.mp4"
   "text|total amount due on the plumber invoice|invoice.pdf"
   "text|parse_config_line|util.rs"
+  "text|smooth a list of numbers over a sliding window|helper.py"
   "text|how to make pancakes with maple syrup|note_a.md"
   "image|image-query.jpg|IMG_0412.jpg"
   "audio|audio-query.wav|recording_01.wav"
@@ -134,10 +135,10 @@ if [ -n "${WAYLAND_DISPLAY:-}" ] && [ "${MMSEARCH_SCREENSHOT:-}" = 1 ]; then
   if [ -S "$TMP/run/mmsearch.sock" ]; then
     XDG_RUNTIME_DIR="$TMP/run" "$MM" toggle
     sleep 2
-    # Capture only the 900x560 panel at the center of the focused output: the rest of the
+    # Capture only the 1080x672 panel (900x560 at the default 1.2 zoom) at the center of the focused output: the rest of the
     # screen is the user's private desktop. Without niri there is no geometry, so no shot.
     geom=$(niri msg --json focused-output 2>/dev/null |
-      jq -r '.logical | "\(.x + ((.width - 900) / 2 | floor)),\(.y + ((.height - 560) / 2 | floor)) 900x560"' 2>/dev/null || true)
+      jq -r '.logical | "\(.x + ((.width - 1080) / 2 | floor)),\(.y + ((.height - 672) / 2 | floor)) 1080x672"' 2>/dev/null || true)
     if [ -n "$geom" ] && grim -g "$geom" "$REPORT_DIR/overlay.png"; then
       SHOT_HTML="<section><h2>Overlay</h2><img class=\"shot\" src=\"data:image/png;base64,$(base64 -w0 "$REPORT_DIR/overlay.png")\" alt=\"overlay screenshot\"></section>"
     else

@@ -48,9 +48,14 @@ impl Searcher {
         })
     }
 
+    /// The path matcher only: the first answer to a keystroke, in milliseconds.
+    pub fn paths(&self, text: &str, filter: Filter, limit: usize) -> Result<Vec<Hit>> {
+        self.run(text, None, false, filter, limit)
+    }
+
     /// Path and keyword matchers only; it never waits for the model.
     pub fn fast(&self, text: &str, filter: Filter, limit: usize) -> Result<Vec<Hit>> {
-        self.run(text, None, filter, limit)
+        self.run(text, None, true, filter, limit)
     }
 
     /// All three matchers. `vector` is the query embedding (768d unit vector), if there is one.
@@ -62,16 +67,20 @@ impl Searcher {
         filter: Filter,
         limit: usize,
     ) -> Result<Vec<Hit>> {
-        self.run(text, vector, filter, limit)
+        self.run(text, vector, true, filter, limit)
     }
 
+    /// `keyword` is false for the paths-only pass: FTS5 ranks every prefix match before it
+    /// keeps the top results, which takes 0.1 to 0.5 s over about 2M chunks.
     fn run(
         &self,
         text: &str,
         vector: Option<&[f32]>,
+        keyword: bool,
         filter: Filter,
         limit: usize,
     ) -> Result<Vec<Hit>> {
+        let t0 = std::time::Instant::now();
         let store = self.store.lock().unwrap();
         let mut cands: HashMap<PathBuf, Cand> = HashMap::new();
 
@@ -117,8 +126,14 @@ impl Searcher {
             );
         }
 
+        let path_t = t0.elapsed();
         let (mut rank, mut seen) = (0, Vec::new());
-        for (file_id, chunk) in store.fts(text, PER_LIST)? {
+        let fts = if keyword {
+            store.fts(text, PER_LIST)?
+        } else {
+            Vec::new()
+        };
+        for (file_id, chunk) in fts {
             if let Some(f) = store.file(file_id)? {
                 add(
                     f.path,
@@ -132,6 +147,7 @@ impl Searcher {
             }
         }
 
+        let fts_t = t0.elapsed();
         if let Some(v) = vector {
             let (mut rank, mut seen) = (0, Vec::new());
             for (chunk, file_id, _) in self.vectors.read().unwrap().search(v, PER_LIST) {
@@ -149,6 +165,7 @@ impl Searcher {
             }
         }
 
+        let vec_t = t0.elapsed();
         let mut ranked: Vec<_> = cands.into_iter().collect();
         ranked.sort_by(|a, b| b.1.score.total_cmp(&a.1.score).then_with(|| a.0.cmp(&b.0)));
 
@@ -158,9 +175,14 @@ impl Searcher {
             if hits.len() >= limit {
                 break;
             }
-            if std::fs::symlink_metadata(&path).is_err() {
+            let Ok(meta) = std::fs::symlink_metadata(&path) else {
                 continue;
-            }
+            };
+            let modified = meta
+                .modified()
+                .ok()
+                .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                .map(|d| d.as_secs() as i64);
             let body = match (c.chunk, c.file_id) {
                 (Some(chunk), _) => store.chunk_text(chunk)?,
                 _ => None,
@@ -177,8 +199,14 @@ impl Searcher {
                 path,
                 kind: c.kind,
                 score: c.score,
+                modified,
             });
         }
+        tracing::debug!(
+            "search times, cumulative: path {path_t:?}, keyword {fts_t:?}, vector {vec_t:?}, rows {:?} ({} hits)",
+            t0.elapsed(),
+            hits.len()
+        );
         Ok(hits)
     }
 }

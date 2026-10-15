@@ -43,8 +43,18 @@ pub fn path_walker(root: &Path) -> WalkBuilder {
         // Network and FUSE mounts under the root (sshfs, rclone) stay out: walking them is slow
         // and indexing them downloads every file.
         .same_file_system(true);
-    b.filter_entry(move |e| !excluded(&root, e.path(), PATH_EXCLUDES));
+    b.filter_entry(move |e| !excluded(&root, e.path(), PATH_EXCLUDES) && !hidden_dir(&root, e));
     b
+}
+
+/// Hidden directories hold app data, caches and game files: 73% of the 2M paths in one
+/// home, and the fuzzy match scans every path on each keystroke. `~/.config` stays for
+/// dotfiles, and so do hidden files such as `~/.zshrc`.
+fn hidden_dir(root: &Path, e: &DirEntry) -> bool {
+    e.depth() > 0
+        && e.file_type().is_some_and(|t| t.is_dir())
+        && e.file_name().to_string_lossy().starts_with('.')
+        && e.path() != root.join(".config")
 }
 
 /// The files that get keyword text and vectors.

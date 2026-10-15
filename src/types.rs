@@ -51,32 +51,38 @@ impl Kind {
 pub enum Filter {
     #[default]
     All,
-    Files,
     Images,
     Media,
+    Docs,
+    Code,
 }
 
 impl Filter {
-    pub const ALL: [Filter; 4] = [Filter::All, Filter::Files, Filter::Images, Filter::Media];
+    pub const ALL: [Filter; 5] = [
+        Filter::All,
+        Filter::Images,
+        Filter::Media,
+        Filter::Docs,
+        Filter::Code,
+    ];
 
     pub fn label(self) -> &'static str {
         match self {
             Filter::All => "All",
-            Filter::Files => "Files",
             Filter::Images => "Images",
             Filter::Media => "Media",
+            Filter::Docs => "Docs",
+            Filter::Code => "Code",
         }
     }
 
     pub fn accepts(self, kind: Kind) -> bool {
         match self {
             Filter::All => true,
-            Filter::Files => matches!(
-                kind,
-                Kind::Text | Kind::Code | Kind::Data | Kind::Pdf | Kind::Other
-            ),
             Filter::Images => kind == Kind::Image,
             Filter::Media => matches!(kind, Kind::Audio | Kind::Video),
+            Filter::Docs => matches!(kind, Kind::Text | Kind::Pdf | Kind::Other),
+            Filter::Code => matches!(kind, Kind::Code | Kind::Data),
         }
     }
 }
@@ -92,6 +98,9 @@ pub struct Hit {
     pub snippet: Option<String>,
     /// The best chunk text for the preview pane, at most about 2000 chars.
     pub preview: Option<String>,
+    /// The file's modification time, in Unix seconds.
+    #[serde(default)]
+    pub modified: Option<i64>,
 }
 
 /// The daemon state that `mmsearch status` and the overlay status line show.
