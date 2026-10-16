@@ -118,6 +118,35 @@ systemctl --user enable --now ~/.nix-profile/lib/systemd/user/mmsearch.service
 
 The Nix package puts all the runtime tools on the daemon's `PATH`. You do not have to install them.
 
+### Prebuilt binary
+
+Each [release](https://github.com/0xPD33/mmsearch/releases) has a binary for x86_64 Linux. It needs glibc 2.39 or newer: Ubuntu 24.04, Debian 13, Fedora 40, Arch Linux, Omarchy, or newer. It runs on any 64-bit x86 CPU.
+
+Install the runtime programs first. On Arch Linux and Omarchy:
+
+```sh
+sudo pacman -S --needed vulkan-icd-loader alsa-lib ffmpeg poppler curl xdg-utils wl-clipboard slurp libnotify
+```
+
+On Ubuntu and Debian:
+
+```sh
+sudo apt install libvulkan1 libasound2t64 ffmpeg poppler-utils curl xdg-utils wl-clipboard slurp libnotify-bin
+```
+
+Then download the binary and start the daemon with your session:
+
+```sh
+curl -LO https://github.com/0xPD33/mmsearch/releases/download/v0.1.0/mmsearch-v0.1.0-x86_64-linux.tar.gz
+tar xzf mmsearch-v0.1.0-x86_64-linux.tar.gz
+cd mmsearch-v0.1.0-x86_64-linux
+install -Dm755 mmsearch ~/.local/bin/mmsearch
+install -Dm644 mmsearch.service ~/.config/systemd/user/mmsearch.service
+systemctl --user enable --now mmsearch
+```
+
+Make sure that `~/.local/bin` is in your `PATH`, so that your compositor key binding finds `mmsearch toggle`.
+
 ### From source
 
 You need these build dependencies:

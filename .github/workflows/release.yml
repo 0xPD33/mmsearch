@@ -1,0 +1,45 @@
+# Attaches a prebuilt x86_64 Linux binary to a GitHub release.
+# Ubuntu 24.04 has glibc 2.39, so the binary also runs on newer distros such as Arch.
+# llama.cpp builds for baseline x86-64 (no target-cpu), so any 64-bit x86 CPU can run it.
+name: release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to build and upload to, for example v0.1.0
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  linux-x86_64:
+    runs-on: ubuntu-24.04
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential curl git cmake pkg-config clang libclang-dev glslc libvulkan-dev spirv-headers libwayland-dev libxkbcommon-dev libasound2-dev
+      - name: Install the pinned Rust toolchain
+        run: rustup toolchain install
+      - run: cargo build --release --locked
+      - name: Package
+        run: |
+          name=mmsearch-$TAG-x86_64-linux
+          mkdir $name
+          cp target/release/mmsearch LICENSE README.md $name/
+          sed 's|@out@/bin|%h/.local/bin|' systemd/mmsearch.service > $name/mmsearch.service
+          tar czf $name.tar.gz $name
+          sha256sum $name.tar.gz > $name.tar.gz.sha256
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" mmsearch-$TAG-x86_64-linux.tar.gz mmsearch-$TAG-x86_64-linux.tar.gz.sha256 --clobber
