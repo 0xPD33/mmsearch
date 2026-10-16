@@ -16,6 +16,10 @@
   <img src="assets/overlay.svg" width="820" alt="The mmsearch overlay. The query kitten finds IMG_0412.jpg, a photo of a kitten, although the file name has no such word.">
 </p>
 
+<p align="center">
+  <a href="assets/demo.mp4"><b>Watch the demo video (34 s)</b></a>: six searches find photos, a video, a speech, an invoice and code by what they contain.
+</p>
+
 Press a key and type what you remember. mmsearch finds a photo from what it shows, a video from its frames, a voice memo from what someone says in it, and a note from what it means. The file name does not have to match. You can also search with an image or with your voice.
 
 Everything runs on your machine. The model runs on your GPU, the index stays in your home directory, and no file leaves your computer.
