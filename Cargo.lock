@@ -25,19 +25,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
-name = "ahash"
-version = "0.8.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a15f179cd60c4584b8a8c596927aadc462e27f2ca70c04e0071964a73ba7a75"
-dependencies = [
- "cfg-if",
- "getrandom 0.3.4",
- "once_cell",
- "version_check",
- "zerocopy",
-]
-
-[[package]]
 name = "aho-corasick"
 version = "1.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -818,7 +805,7 @@ checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
 [[package]]
 name = "dpi"
 version = "0.1.2"
-source = "git+https://github.com/SergioRibera/winit?rev=ea675fba8f0eedaf3c474a8176b553eecf1fb65a#ea675fba8f0eedaf3c474a8176b553eecf1fb65a"
+source = "git+https://github.com/SergioRibera/winit?rev=b215c0a872d5ca9d5c029ec6620b9278f6613d2a#b215c0a872d5ca9d5c029ec6620b9278f6613d2a"
 
 [[package]]
 name = "either"
@@ -2246,11 +2233,10 @@ checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
 
 [[package]]
 name = "orbclient"
-version = "0.3.55"
+version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5df339f526ea9a60e371768d50efc2f2508c7203290731565d1f7a6f71d21747"
+checksum = "01f140a738f180203d7912dfd369936fff2fb0ad6f426c0aa007ed3e2b443e6b"
 dependencies = [
- "libc",
  "libredox",
 ]
 
@@ -2661,6 +2647,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "03251193000f4bd3b042892be858ee50e8b3719f2b08e5833ac4353724632430"
 
 [[package]]
+name = "redox_event"
+version = "0.4.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c5018d583d6d2f5499352aea8d177e9067d1eb03ab17c78169d5ba7a30001b15"
+dependencies = [
+ "bitflags 2.13.2",
+ "libredox",
+]
+
+[[package]]
 name = "redox_syscall"
 version = "0.5.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2830,9 +2826,9 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "sctk-adwaita"
-version = "0.11.1"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea2a4360b9abcdcee43809e6fc11d6d61ca5d25734026a8fc46c2883eea3f13f"
+checksum = "1f8ea028b7cb32e2f577b0a55a7b54cb206376bdb1221bd5c81dcf20b68db1fb"
 dependencies = [
  "ab_glyph",
  "log",
@@ -2981,20 +2977,18 @@ checksum = "5b3dc8af474f516a851ff4bd12db780f948b9250ad37211e4eec0bccea54e01b"
 
 [[package]]
 name = "smithay-client-toolkit"
-version = "0.20.0"
+version = "0.21.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0512da38f5e2b31201a93524adb8d3136276fa4fe4aafab4e1f727a82b534cc0"
+checksum = "74dc9ee14b0fdcb535f9556141bacac070c994a977d2240ee455d7438a617f00"
 dependencies = [
  "bitflags 2.13.2",
  "calloop",
  "calloop-wayland-source",
  "cursor-icon",
- "libc",
  "log",
  "memmap2",
  "rustix",
  "thiserror 2.0.21",
- "wayland-backend",
  "wayland-client",
  "wayland-csd-frame",
  "wayland-cursor",
@@ -3597,9 +3591,9 @@ dependencies = [
 
 [[package]]
 name = "wayland-protocols-experimental"
-version = "20250721.0.1"
+version = "20251230.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40a1f863128dcaaec790d7b4b396cc9b9a7a079e878e18c47e6c2d2c5a8dcbb1"
+checksum = "91c6c3e7178e553d093d46999032bc79aafea9dedd71dd702c8ace7bbc25cf13"
 dependencies = [
  "bitflags 2.13.2",
  "wayland-backend",
@@ -3962,15 +3956,6 @@ dependencies = [
 
 [[package]]
 name = "windows-sys"
-version = "0.59.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e38bc4d79ed67fd075bcc251a1c39b32a1776bbe92e5bef1f0bf1f8c531853b"
-dependencies = [
- "windows-targets 0.52.6",
-]
-
-[[package]]
-name = "windows-sys"
 version = "0.60.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2f500e4d28234f72040990ec9d39e3a6b950f9f22d3dba18416c35882612bcb"
@@ -4175,8 +4160,8 @@ checksum = "d6bbff5f0aada427a1e5a6da5f1f98158182f26556f345ac9e04d36d0ebed650"
 
 [[package]]
 name = "winit"
-version = "0.30.12"
-source = "git+https://github.com/SergioRibera/winit?rev=ea675fba8f0eedaf3c474a8176b553eecf1fb65a#ea675fba8f0eedaf3c474a8176b553eecf1fb65a"
+version = "0.31.0-beta.3"
+source = "git+https://github.com/SergioRibera/winit?rev=b215c0a872d5ca9d5c029ec6620b9278f6613d2a#b215c0a872d5ca9d5c029ec6620b9278f6613d2a"
 dependencies = [
  "bitflags 2.13.2",
  "cfg_aliases",
@@ -4201,8 +4186,8 @@ dependencies = [
 
 [[package]]
 name = "winit-android"
-version = "0.30.12"
-source = "git+https://github.com/SergioRibera/winit?rev=ea675fba8f0eedaf3c474a8176b553eecf1fb65a#ea675fba8f0eedaf3c474a8176b553eecf1fb65a"
+version = "0.31.0-beta.3"
+source = "git+https://github.com/SergioRibera/winit?rev=b215c0a872d5ca9d5c029ec6620b9278f6613d2a#b215c0a872d5ca9d5c029ec6620b9278f6613d2a"
 dependencies = [
  "android-activity",
  "bitflags 2.13.2",
@@ -4216,8 +4201,8 @@ dependencies = [
 
 [[package]]
 name = "winit-appkit"
-version = "0.30.12"
-source = "git+https://github.com/SergioRibera/winit?rev=ea675fba8f0eedaf3c474a8176b553eecf1fb65a#ea675fba8f0eedaf3c474a8176b553eecf1fb65a"
+version = "0.31.0-beta.3"
+source = "git+https://github.com/SergioRibera/winit?rev=b215c0a872d5ca9d5c029ec6620b9278f6613d2a#b215c0a872d5ca9d5c029ec6620b9278f6613d2a"
 dependencies = [
  "bitflags 2.13.2",
  "block2",
@@ -4238,12 +4223,15 @@ dependencies = [
 
 [[package]]
 name = "winit-common"
-version = "0.30.12"
-source = "git+https://github.com/SergioRibera/winit?rev=ea675fba8f0eedaf3c474a8176b553eecf1fb65a#ea675fba8f0eedaf3c474a8176b553eecf1fb65a"
+version = "0.31.0-beta.3"
+source = "git+https://github.com/SergioRibera/winit?rev=b215c0a872d5ca9d5c029ec6620b9278f6613d2a#b215c0a872d5ca9d5c029ec6620b9278f6613d2a"
 dependencies = [
+ "block2",
+ "dpi",
  "memmap2",
  "objc2",
  "objc2-core-foundation",
+ "objc2-foundation",
  "smol_str 0.3.6",
  "tracing",
  "winit-core",
@@ -4253,8 +4241,8 @@ dependencies = [
 
 [[package]]
 name = "winit-core"
-version = "0.30.12"
-source = "git+https://github.com/SergioRibera/winit?rev=ea675fba8f0eedaf3c474a8176b553eecf1fb65a#ea675fba8f0eedaf3c474a8176b553eecf1fb65a"
+version = "0.31.0-beta.3"
+source = "git+https://github.com/SergioRibera/winit?rev=b215c0a872d5ca9d5c029ec6620b9278f6613d2a#b215c0a872d5ca9d5c029ec6620b9278f6613d2a"
 dependencies = [
  "bitflags 2.13.2",
  "cursor-icon",
@@ -4267,14 +4255,15 @@ dependencies = [
 
 [[package]]
 name = "winit-orbital"
-version = "0.30.12"
-source = "git+https://github.com/SergioRibera/winit?rev=ea675fba8f0eedaf3c474a8176b553eecf1fb65a#ea675fba8f0eedaf3c474a8176b553eecf1fb65a"
+version = "0.31.0-beta.3"
+source = "git+https://github.com/SergioRibera/winit?rev=b215c0a872d5ca9d5c029ec6620b9278f6613d2a#b215c0a872d5ca9d5c029ec6620b9278f6613d2a"
 dependencies = [
  "bitflags 2.13.2",
  "dpi",
+ "libredox",
  "orbclient",
  "raw-window-handle",
- "redox_syscall 0.5.18",
+ "redox_event",
  "smol_str 0.3.6",
  "tracing",
  "winit-core",
@@ -4282,8 +4271,8 @@ dependencies = [
 
 [[package]]
 name = "winit-uikit"
-version = "0.30.12"
-source = "git+https://github.com/SergioRibera/winit?rev=ea675fba8f0eedaf3c474a8176b553eecf1fb65a#ea675fba8f0eedaf3c474a8176b553eecf1fb65a"
+version = "0.31.0-beta.3"
+source = "git+https://github.com/SergioRibera/winit?rev=b215c0a872d5ca9d5c029ec6620b9278f6613d2a#b215c0a872d5ca9d5c029ec6620b9278f6613d2a"
 dependencies = [
  "bitflags 2.13.2",
  "block2",
@@ -4302,16 +4291,17 @@ dependencies = [
 
 [[package]]
 name = "winit-wayland"
-version = "0.30.12"
-source = "git+https://github.com/SergioRibera/winit?rev=ea675fba8f0eedaf3c474a8176b553eecf1fb65a#ea675fba8f0eedaf3c474a8176b553eecf1fb65a"
+version = "0.31.0-beta.3"
+source = "git+https://github.com/SergioRibera/winit?rev=b215c0a872d5ca9d5c029ec6620b9278f6613d2a#b215c0a872d5ca9d5c029ec6620b9278f6613d2a"
 dependencies = [
- "ahash",
  "bitflags 2.13.2",
  "calloop",
  "cursor-icon",
  "dpi",
+ "foldhash 0.2.0",
  "libc",
  "memmap2",
+ "percent-encoding",
  "raw-window-handle",
  "rustix",
  "sctk-adwaita",
@@ -4328,8 +4318,8 @@ dependencies = [
 
 [[package]]
 name = "winit-web"
-version = "0.30.12"
-source = "git+https://github.com/SergioRibera/winit?rev=ea675fba8f0eedaf3c474a8176b553eecf1fb65a#ea675fba8f0eedaf3c474a8176b553eecf1fb65a"
+version = "0.31.0-beta.3"
+source = "git+https://github.com/SergioRibera/winit?rev=b215c0a872d5ca9d5c029ec6620b9278f6613d2a#b215c0a872d5ca9d5c029ec6620b9278f6613d2a"
 dependencies = [
  "atomic-waker",
  "bitflags 2.13.2",
@@ -4350,24 +4340,26 @@ dependencies = [
 
 [[package]]
 name = "winit-win32"
-version = "0.30.12"
-source = "git+https://github.com/SergioRibera/winit?rev=ea675fba8f0eedaf3c474a8176b553eecf1fb65a#ea675fba8f0eedaf3c474a8176b553eecf1fb65a"
+version = "0.31.0-beta.3"
+source = "git+https://github.com/SergioRibera/winit?rev=b215c0a872d5ca9d5c029ec6620b9278f6613d2a#b215c0a872d5ca9d5c029ec6620b9278f6613d2a"
 dependencies = [
  "bitflags 2.13.2",
  "cursor-icon",
  "dpi",
+ "percent-encoding",
  "raw-window-handle",
  "smol_str 0.3.6",
  "tracing",
  "unicode-segmentation",
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
+ "winit-common",
  "winit-core",
 ]
 
 [[package]]
 name = "winit-x11"
-version = "0.30.12"
-source = "git+https://github.com/SergioRibera/winit?rev=ea675fba8f0eedaf3c474a8176b553eecf1fb65a#ea675fba8f0eedaf3c474a8176b553eecf1fb65a"
+version = "0.31.0-beta.3"
+source = "git+https://github.com/SergioRibera/winit?rev=b215c0a872d5ca9d5c029ec6620b9278f6613d2a#b215c0a872d5ca9d5c029ec6620b9278f6613d2a"
 dependencies = [
  "bitflags 2.13.2",
  "bytemuck",

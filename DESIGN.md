@@ -160,7 +160,7 @@ The mouse can do everything the keys do:
 
 - Pointer motion over a row selects it. A list that scrolls under a resting pointer keeps its selection, because only real motion counts.
 - A click on a row or on the preview opens the file. A right click shows it in its folder.
-- The wheel scrolls the list by 2 rows per notch, with an ease of about 45 ms; a touchpad scrolls without easing. When the selection would leave the view, it moves to the nearest fully visible row. Over the preview pane, the wheel scrolls long preview text.
+- The wheel scrolls the list by 3 rows per notch, with an ease of about 35 ms; a touchpad scrolls without easing. When the selection would leave the view, it moves to the nearest fully visible row. Over the preview pane, the wheel scrolls long preview text.
 - The scrollbar thumb drags, and a click on the track jumps there.
 - The action bar has Open, Show in folder, Copy path and Copy file.
 - In the search field, a click places the caret, a drag selects, and a double click selects a word. An × clears the query, and a click on an image or voice chip removes it.

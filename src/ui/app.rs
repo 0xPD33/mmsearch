@@ -35,9 +35,9 @@ const ROW_THUMB_EDGE: u32 = 96;
 /// Row thumbnails kept on the GPU, at about 37 KB each.
 const MAX_ROW_THUMBS: usize = 1500;
 /// Rows per mouse wheel notch.
-const WHEEL_ROWS: f32 = 2.0;
+const WHEEL_ROWS: f32 = 3.0;
 /// The time constant of the scroll animation.
-const SCROLL_EASE: f32 = 0.045;
+const SCROLL_EASE: f32 = 0.035;
 /// The overlay size relative to the 920 x 580 layout, and the Ctrl+= / Ctrl+- limits.
 const DEFAULT_ZOOM: f32 = 1.2;
 const ZOOM_RANGE: (f32, f32) = (0.8, 1.8);
@@ -1280,7 +1280,7 @@ impl ApplicationHandler for App {
                 position,
                 button,
                 ..
-            } if button.mouse_button() == MouseButton::Left => {
+            } if button.clone().mouse_button() == Some(MouseButton::Left) => {
                 let s = self.scale();
                 self.click(position.x as f32 / s, position.y as f32 / s);
             }
@@ -1289,7 +1289,7 @@ impl ApplicationHandler for App {
                 position,
                 button,
                 ..
-            } if button.mouse_button() == MouseButton::Right => {
+            } if button.clone().mouse_button() == Some(MouseButton::Right) => {
                 let s = self.scale();
                 self.right_click(position.x as f32 / s, position.y as f32 / s);
             }
@@ -1297,7 +1297,7 @@ impl ApplicationHandler for App {
                 state: ElementState::Released,
                 button,
                 ..
-            } if button.mouse_button() == MouseButton::Left => {
+            } if button.clone().mouse_button() == Some(MouseButton::Left) => {
                 self.field_drag = false;
                 if self.drag.take().is_some() {
                     let hot = self
@@ -1354,6 +1354,7 @@ impl ApplicationHandler for App {
                 let (dy, animate) = match delta {
                     MouseScrollDelta::LineDelta(_, y) => (y * WHEEL_ROWS * ROW_H, true),
                     MouseScrollDelta::PixelDelta(p) => (p.y as f32 / self.scale(), false),
+                    _ => return,
                 };
                 let over_preview = self.pointer.is_some_and(|(x, y)| draw::over_preview(x, y));
                 if !(over_preview && self.scroll_preview(dy)) {

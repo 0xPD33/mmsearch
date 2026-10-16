@@ -33,7 +33,7 @@
           cargoLock = {
             lockFile = ./Cargo.lock;
             # The winit fork; the hash covers every crate of that git checkout.
-            outputHashes."dpi-0.1.2" = "sha256-7DW0eaqJ5S0ixl4aio+cAE8qnq77tT9yzbemJJOGDX0=";
+            outputHashes."dpi-0.1.2" = "sha256-QgBbEgF1vmuHPgMiKIpLDZOHU4899WEuiK7bx7IHz/0=";
             # The llama-cpp-rs fork; fetchgit includes the llama.cpp submodule.
             outputHashes."llama-cpp-sys-2-0.1.160" = "sha256-6ZbZiecVHx43adJ3jxqyNv151sxQs2adOYYIkkmo1xs=";
           };
