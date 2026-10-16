@@ -1,0 +1,38 @@
+# Builds mmsearch without Nix on the distros that the README gives install commands for.
+# The package lists here must match the README's "From source" section.
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential curl git cmake pkg-config clang libclang-dev glslc libvulkan-dev spirv-headers libwayland-dev libxkbcommon-dev libasound2-dev
+      - name: Install the pinned Rust toolchain
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --check
+      - run: cargo clippy --release --locked -- -D warnings
+      - run: cargo build --release --locked
+      - run: ./target/release/mmsearch --help
+
+  arch:
+    runs-on: ubuntu-24.04
+    container: archlinux:latest
+    steps:
+      - name: Install build dependencies
+        run: pacman -Syu --noconfirm --needed base-devel rustup git cmake pkgconf clang shaderc vulkan-headers vulkan-icd-loader spirv-headers wayland libxkbcommon alsa-lib
+      - uses: actions/checkout@v5
+      - name: Install the pinned Rust toolchain
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release --locked
+      - run: ./target/release/mmsearch --help

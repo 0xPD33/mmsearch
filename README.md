@@ -128,11 +128,31 @@ You need these build dependencies:
 - shaderc (`glslc`), Vulkan headers and SPIR-V headers
 - The development files for wayland, libxkbcommon and alsa-lib
 
+On Arch Linux and Omarchy:
+
 ```sh
-cargo install --locked --git https://github.com/0xPD33/mmsearch
+sudo pacman -S --needed base-devel rustup git cmake pkgconf clang shaderc vulkan-headers vulkan-icd-loader spirv-headers wayland libxkbcommon alsa-lib
+sudo pacman -S --needed ffmpeg poppler curl xdg-utils wl-clipboard slurp libnotify
+rustup default stable
 ```
 
-The daemon calls these programs at runtime, so install them with your package manager:
+On Ubuntu 24.04 and Debian. The `rustc` package is too old, so install Rust with [rustup](https://rustup.rs):
+
+```sh
+sudo apt install build-essential curl git cmake pkg-config clang libclang-dev glslc libvulkan-dev spirv-headers libwayland-dev libxkbcommon-dev libasound2-dev
+sudo apt install ffmpeg poppler-utils xdg-utils wl-clipboard slurp libnotify-bin
+curl -sSf https://sh.rustup.rs | sh
+```
+
+Then build and install mmsearch to `~/.cargo/bin`. The first build takes several minutes, because it compiles llama.cpp and its Vulkan shaders.
+
+```sh
+cargo install --locked --git https://github.com/0xPD33/mmsearch --tag v0.1.0
+```
+
+Both lists were tested in clean Arch Linux and Ubuntu 24.04 containers: the build, an index of the test files, the queries, and the overlay in a headless sway session.
+
+The daemon calls these programs at runtime. The second command of each list above installs them:
 
 | Program | Used for |
 |---|---|
