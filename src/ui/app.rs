@@ -749,6 +749,13 @@ impl App {
                 if id != self.st.search_id {
                     return;
                 }
+                // A half-typed word often matches no name or keyword. Keep the old list until
+                // the meaning pass answers, so the list does not blink empty on each key.
+                if !done && hits.is_empty() && !self.st.hits.is_empty() {
+                    self.st.pending = true;
+                    self.redraw();
+                    return;
+                }
                 // After the user moved, the selected file stays at the same place on screen
                 // while the list reorders around it. Before that, the top result is selected.
                 let keep = self
