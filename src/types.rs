@@ -110,6 +110,6 @@ pub struct Status {
     pub total: usize,
     /// For example "indexing", "paused (cpu busy)", "paused (battery)", "idle".
     pub phase: String,
-    /// "unloaded", "loading", "ready" or "failed: <reason>".
+    /// "unloaded", "loading", "ready", "ready (cpu)" or "failed: <reason>".
     pub model: String,
 }

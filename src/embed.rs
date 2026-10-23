@@ -48,6 +48,8 @@ pub struct Embedder {
     model: *mut sys::llama_model,
     ctx: *mut sys::llama_context,
     mctx: *mut sys::mtmd_context,
+    /// False when llama.cpp finds no GPU, for example without a Vulkan driver.
+    pub gpu: bool,
 }
 
 impl Embedder {
@@ -59,11 +61,16 @@ impl Embedder {
             model: ptr::null_mut(),
             ctx: ptr::null_mut(),
             mctx: ptr::null_mut(),
+            gpu: false,
         };
         unsafe {
             sys::llama_log_set(Some(log), ptr::null_mut());
             sys::mtmd_helper_log_set(Some(log), ptr::null_mut());
             sys::llama_backend_init();
+            this.gpu = sys::llama_supports_gpu_offload();
+            if !this.gpu {
+                tracing::warn!("llama.cpp found no GPU; the model runs on the CPU");
+            }
 
             let mut mp = sys::llama_model_default_params();
             mp.n_gpu_layers = 999;

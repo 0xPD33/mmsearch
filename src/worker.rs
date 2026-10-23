@@ -106,7 +106,7 @@ impl EmbedService {
         cv.notify_one();
     }
 
-    /// "unloaded", "loading", "ready" or "failed: <reason>".
+    /// "unloaded", "loading", "ready", "ready (cpu)" or "failed: <reason>".
     pub fn state(&self) -> String {
         self.shared.0.lock().unwrap().model.clone()
     }
@@ -170,9 +170,10 @@ fn run(shared: Arc<(Mutex<State>, Condvar)>, model: PathBuf, mmproj: PathBuf) {
                 m.lock().unwrap().model = "loading".into();
                 match Embedder::load(&model, &mmproj) {
                     Ok(e) => {
+                        let state = if e.gpu { "ready" } else { "ready (cpu)" };
                         embedder = Some(e);
                         failed_at = None;
-                        m.lock().unwrap().model = "ready".into();
+                        m.lock().unwrap().model = state.into();
                     }
                     Err(e) => {
                         tracing::error!("model load failed: {e:#}");

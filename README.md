@@ -501,7 +501,7 @@ systemctl --user start mmsearch
 
 **Meaning search finds nothing.** Run `mmsearch status`. If the model line shows `failed: ...`, the model did not load or download. Path and keyword search still work.
 
-**Indexing is very slow.** llama.cpp runs on the CPU if Vulkan fails. Look for Vulkan errors in `journalctl --user -u mmsearch`.
+**Indexing is very slow.** Run `mmsearch status`. If the model line shows `ready (cpu)`, llama.cpp found no GPU and runs on the CPU. Check your Vulkan driver, and look for Vulkan errors in `journalctl --user -u mmsearch`.
 
 ## Limits
 

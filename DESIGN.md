@@ -186,7 +186,7 @@ A voice query embeds the speech directly, with no speech-to-text step. If speech
 
 ## Errors
 
-- If Vulkan fails, llama.cpp runs on the CPU. The status line does not show this.
+- If llama.cpp finds no GPU, for example without a Vulkan driver, it runs on the CPU. The model state then shows `ready (cpu)`, and the daemon logs a warning.
 - If the model is missing or the download fails, semantic search is off. Path and keyword search keep working, and the status line shows the reason.
 - If `toggle` finds no daemon, it calls `notify-send` and exits with status 1.
 
