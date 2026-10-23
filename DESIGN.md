@@ -166,7 +166,7 @@ The mouse can do everything the keys do:
 - In the search field, a click places the caret, a drag selects, and a double click selects a word. An × clears the query, and a click on an image or voice chip removes it.
 - The pointer shape shows what a click does: a hand over buttons and rows, a text cursor over the field.
 
-Each result row shows a thumbnail for an image or a video, else a colored file-type badge, the file name, the parent path relative to `~`, and the modification age ("5 min", "3 d", then a date). A text hit also shows one snippet line: the first line of the best chunk that contains a query word.
+Each result row shows a thumbnail for an image or a video, else a colored file-type badge, the file name, the parent path relative to `~`, and the modification age ("5 min", "3 d", then a date). A text hit also shows one snippet line: the first line of the best chunk that contains a query word. Each query word of 2 or more characters gets a marker in that line.
 
 A worker thread loads row thumbnails for the visible rows and one page ahead, newest request first, from the freedesktop cache; for an image that is not indexed yet, it makes the thumbnail. Up to 1500 row thumbnails of 96 px stay on the GPU. Images in the scene carry a scissor rect, so a half-visible row cannot draw over the filter chips.
 
@@ -208,4 +208,4 @@ A Nix flake builds the binary with `buildRustPackage` and the rust-overlay toolc
 
 ## Not included
 
-OCR, office and epub text extraction, the audio track of a video, audio after 300 seconds, drag and drop, closing on a click outside the panel, highlighting of matched words, syntax highlighting, HNSW and X11.
+OCR, office and epub text extraction, the audio track of a video, audio after 300 seconds, drag and drop, closing on a click outside the panel, highlighting of matched words in the preview, syntax highlighting, HNSW and X11.

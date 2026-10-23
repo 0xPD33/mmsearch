@@ -164,13 +164,35 @@ const QUERY_SIZE: f32 = 17.0;
 /// The search field: x, y, w, h in panel coordinates.
 const FIELD_RECT: [f32; 4] = [16.0, 16.0, 868.0, 44.0];
 
-/// The width of a query prefix. A trailing space can have no width in a line layout, so
-/// the prefix is measured with a marker after it.
 pub fn query_width(g: &mut Gfx, s: f32, prefix: &str) -> f32 {
+    prefix_width(g, s, prefix, QUERY_SIZE)
+}
+
+/// The width of a line prefix. A trailing space can have no width in a line layout, so
+/// the prefix is measured with a marker after it.
+fn prefix_width(g: &mut Gfx, s: f32, prefix: &str, size: f32) -> f32 {
     if prefix.is_empty() {
         return 0.0;
     }
-    width(g, s, &format!("{prefix}|"), QUERY_SIZE) - width(g, s, "|", QUERY_SIZE)
+    width(g, s, &format!("{prefix}|"), size) - width(g, s, "|", size)
+}
+
+/// Byte ranges in `line` of the query words with 2 or more characters, ignoring case.
+/// One-character words would mark most of the line.
+fn word_matches(line: &str, query: &str) -> Vec<Range<usize>> {
+    let lower = line.to_lowercase();
+    // Lowercasing can change byte lengths; then the offsets do not map back to `line`.
+    if lower.len() != line.len() {
+        return Vec::new();
+    }
+    let mut ranges = Vec::new();
+    for w in query.split_whitespace().map(str::to_lowercase) {
+        if w.chars().count() > 1 {
+            ranges.extend(lower.match_indices(&w).map(|(i, m)| i..i + m.len()));
+        }
+    }
+    ranges.retain(|r| line.is_char_boundary(r.start) && line.is_char_boundary(r.end));
+    ranges
 }
 
 /// True if a point in window coordinates is over the search field.
@@ -758,6 +780,15 @@ fn list(g: &mut Gfx, p: &mut Painter, st: &State) {
                 .find(|l| !l.trim().is_empty())
                 .unwrap_or("")
                 .trim();
+            if let Some((t, h)) = band(y + 39.0, 15.0) {
+                for r in word_matches(line, &st.query.text) {
+                    let x0 = tx + prefix_width(g, s, &line[..r.start], 11.0);
+                    let x1 = (tx + prefix_width(g, s, &line[..r.end], 11.0)).min(row_clip[2]);
+                    if x1 > x0 {
+                        p.rect(x0 - 1.0, t, x1 - x0 + 2.0, h, ACCENT_BG, 1.0, 3.0, None);
+                    }
+                }
+            }
             p.text(line, tx, y + 40.0, 11.0, SOFT, row_clip);
         }
     }
