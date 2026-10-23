@@ -472,6 +472,15 @@ mmsearch indexes the contents of your home directory. It skips these:
 
 Path search covers more: it also lists build output, `venv` directories and SDK trees, unless `.gitignore` excludes them. It also includes `~/.config` and hidden files, such as `~/.zshrc`. It skips the other hidden directories, `.git` and `node_modules`. In one home directory, hidden directories held 73% of all paths, mostly game files and package caches. mmsearch does not follow symlinks or enter other file systems, such as network mounts.
 
+To keep a folder out of both path search and content search, list it in a `.ignore` file. The file uses the `.gitignore` syntax, and it also works outside Git repositories. For example, this keeps `~/Private` out:
+
+```sh
+echo '/Private/' >> ~/.ignore
+systemctl --user restart mmsearch
+```
+
+The daemon reads `.ignore` files when it starts, so restart it after you change one.
+
 ## Files and privacy
 
 mmsearch makes one network connection: the first model download from Hugging Face. Nothing else leaves your machine.

@@ -49,8 +49,8 @@ The embedder loads the model when work arrives. It unloads the model after 5 min
 
 mmsearch keeps two tiers, because most files in a typical `$HOME` are caches, game data and package stores.
 
-- **Path tier:** the file paths under `$HOME`. It skips `.git`, `node_modules` and every hidden directory except `~/.config`; hidden files stay. The fuzzy matcher scans the whole list on each keystroke, and in one home hidden directories held 1.47M of 2.0M paths, mostly game files and package caches. Without them, a path pass takes about 15 ms instead of 0.2 to 0.9 s. The tier also follows `.gitignore`. It does not follow symlinks, and it does not enter other file systems, such as sshfs or rclone mounts.
-- **Content tier:** the files that get keyword text and vectors. It also skips every dot-directory, Python venvs, `site-packages`, `node_modules`, `__pycache__` and SDK trees.
+- **Path tier:** the file paths under `$HOME`. It skips `.git`, `node_modules` and every hidden directory except `~/.config`; hidden files stay. The fuzzy matcher scans the whole list on each keystroke, and in one home hidden directories held 1.47M of 2.0M paths, mostly game files and package caches. Without them, a path pass takes about 15 ms instead of 0.2 to 0.9 s. The tier also follows `.gitignore` inside Git repositories, and `.ignore` files everywhere. Users exclude directories with `.ignore`. It does not follow symlinks, and it does not enter other file systems, such as sshfs or rclone mounts.
+- **Content tier:** the files that get keyword text and vectors. It also skips every dot-directory, Python venvs, `site-packages`, `node_modules`, `__pycache__` and SDK trees. The startup walk follows `.gitignore` and `.ignore` files, but live changes check the path rules only.
 
 inotify cannot watch millions of paths at an acceptable cost. The daemon therefore walks the path tier again when the overlay opens, if the list is older than 60 seconds. The overlay shows the cached list at once, and new paths stream into the matcher as the walk finds them. The content tier uses inotify.
 
