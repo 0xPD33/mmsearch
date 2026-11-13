@@ -39,7 +39,9 @@
           };
 
           nativeBuildInputs = with pkgs; [ cmake pkg-config shaderc git makeWrapper rustPlatform.bindgenHook ];
-          buildInputs = with pkgs; [ vulkan-headers spirv-headers ] ++ runtimeLibs;
+          # nixpkgs' cargo hook makes libsqlite3-sys link the system sqlite,
+          # even with rusqlite's "bundled" feature.
+          buildInputs = with pkgs; [ vulkan-headers spirv-headers sqlite ] ++ runtimeLibs;
           # cmake is only for llama.cpp inside the cargo build, not for this package.
           dontUseCmakeConfigure = true;
           doCheck = false;
